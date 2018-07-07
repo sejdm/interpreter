@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE Safe, FlexibleContexts #-}
 module Query
   (
     Query

@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE Safe, FlexibleContexts #-}
 module SearchMode (searchList, searchWithRestricted, SearchSettings (..)) where
 import Interpreter
 import Mode

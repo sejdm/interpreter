@@ -1,3 +1,4 @@
+{-# LANGUAGE Safe #-}
 module Internal
   (
     promptLine

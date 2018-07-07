@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 313c9ecec592c3721a713b2912fc66e130dd00f0169df973831c1430e160844a
+-- hash: 27fe33667f86c8c6d69d1a09e3730551e1dd2e64a84d9a1f41e3e32dc2a3a500
 
 name:           interpreter
 version:        0.1.0.0
@@ -35,7 +35,6 @@ library
       Mode
       Monad.Interpreter
       Query
-      Response
       SearchMode
   other-modules:
       Internal

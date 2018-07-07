@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, GeneralizedNewtypeDeriving, FlexibleContexts, NoMonomorphismRestriction #-}
+{-# LANGUAGE Safe, DeriveFunctor, GeneralizedNewtypeDeriving, FlexibleContexts, NoMonomorphismRestriction #-}
 module Interpreter
   (
   -- * The Interpreter monad
@@ -39,7 +39,6 @@ module Interpreter
   , readFile'
   , remember
   , recollect
-  , toTry
   , preventLoop
   , standardPrompt
   , intprompt
@@ -66,13 +65,6 @@ module Interpreter
   , readLastQuery
   , updateState
 
-  -- * Re-exported from Response
-  , ($$)
-  , dontknow
-  , justresponse
-  , Resp
-  , applyResp
-  , Try
 
   -- Others
   , system'
@@ -87,7 +79,6 @@ import Control.Monad.Reader
 import Control.Monad.State.Strict
 import Control.Monad.Trans.Maybe
 import Control.Applicative
-import Response
 import System.Random
 import Mode
 import Monad.Interpreter
@@ -276,10 +267,6 @@ preventLoop a = let m = runMode a in toMode $
 
 updateState :: MonadState (InterState b) m => m ()
 updateState = modify' (\i -> i {interState = interState i + 1})
-
-
-toTry :: Monad m => (a1 -> MaybeT (StateT (InterState b) m) a) -> Try (MaybeT (StateT (InterState b) m)) a1 a
-toTry f = Try (countFailures . f)
 
 
 standardPrompt :: IO Query

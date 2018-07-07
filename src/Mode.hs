@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE Safe, DeriveFunctor, GeneralizedNewtypeDeriving #-}
 module Mode
   (
     Mode'

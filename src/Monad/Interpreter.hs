@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, GeneralizedNewtypeDeriving, FlexibleContexts #-}
+{-# LANGUAGE Trustworthy, DeriveFunctor, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 module Monad.Interpreter
   (
   -- * The Interpreter monad
