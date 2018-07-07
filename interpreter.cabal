@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f402f68cd421d196d68816eb3e186adbcf74f0d79760e5bab67f812d871fb758
+-- hash: 313c9ecec592c3721a713b2912fc66e130dd00f0169df973831c1430e160844a
 
 name:           interpreter
 version:        0.1.0.0
@@ -36,6 +36,7 @@ library
       Monad.Interpreter
       Query
       Response
+      SearchMode
   other-modules:
       Internal
   default-language: Haskell2010
