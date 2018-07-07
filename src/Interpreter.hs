@@ -73,6 +73,10 @@ module Interpreter
   , Resp
   , applyResp
   , Try
+
+  -- Others
+  , system'
+  , system''
   ) where
 
 import Text.Read (readMaybe)
@@ -87,6 +91,8 @@ import Response
 import System.Random
 import Mode
 import Monad.Interpreter
+import System.Process
+import System.Exit
 
 
 
@@ -283,6 +289,12 @@ cowsay :: MonadIO m => String -> m ()
 cowsay x = liftIO $ void $ system ("/usr/games/xcowsay --image=/home/shane/Pictures/characters/butler.png '" ++ x ++ "'")
 
 
+system' s = liftIO (system s) >>= (\x -> case x of ExitSuccess -> pure (); _ -> empty)
+
+system'' i s  = do (e, o, _) <- liftIO $ readCreateProcessWithExitCode ( shell s ) i
+                   case e of
+                     ExitSuccess -> return o
+                     _ -> empty
 
 -- Others
 {-
