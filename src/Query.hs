@@ -19,6 +19,9 @@ module Query
 
   , applyParser
   , on
+  , fullQuery
+  , fullQueryWords
+
   ) where
 
 import qualified Data.Set as S
@@ -73,6 +76,12 @@ wordsBetween x y = Parser $ \q -> listToAlt (between x y q)
 -- | Obtain the phrase in the query between the given strings.
 phraseBetween :: Alternative f => String -> String -> Parser Query f String
 phraseBetween x y = unwords <$> wordsBetween x y
+
+fullQuery :: Alternative f =>  Parser Query f String
+fullQuery = Parser (pure . queryOriginal)
+
+fullQueryWords :: Alternative f =>  Parser Query f [String]
+fullQueryWords = Parser (pure . queryWordList)
 
 newtype Parser s m a = Parser {applyParser :: s -> m a} deriving (Functor)
 
