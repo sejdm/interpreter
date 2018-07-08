@@ -58,7 +58,7 @@ module Interpreter
   , modeWithNewState
   , withNewState'
   , modeWithNewState'
-  , on
+  --, on
   , raise
   , escapeMode
   , interrupted
@@ -131,8 +131,7 @@ ask' f = f <$> ask
 obtain :: MonadState a f => (a -> b) -> f b
 obtain f = f <$> get
 
-on :: MonadState a1 m => (a1 -> a) -> (a -> m b) -> m b
-on x f = obtain x >>= f
+--on :: MonadState a1 m => (a1 -> a) -> (a -> m b) -> m b
 
 
 

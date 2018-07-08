@@ -1,4 +1,4 @@
-{-# LANGUAGE Safe, FlexibleContexts #-}
+{-# LANGUAGE Trustworthy, FlexibleContexts, DeriveFunctor, GeneralizedNewtypeDeriving #-}
 module Query
   (
     Query
@@ -16,6 +16,9 @@ module Query
   , ifSubset
   , ifSub
   , ifSubs
+
+  , applyParser
+  , on
   ) where
 
 import qualified Data.Set as S
@@ -55,18 +58,33 @@ listToAlt xs = pure xs
 
 
 -- | Obtain the words in the query after the given string.
-wordsAfter :: Alternative f => String -> Query -> f [String]
-wordsAfter s = listToAlt . after s
+wordsAfter :: Alternative f => String -> Parser Query f [String]
+wordsAfter s = Parser $ \q -> listToAlt  (after s q)
 
 -- | Obtain the phrase in the query after the given string.
-phraseAfter :: Alternative f => String -> Query -> f String
-phraseAfter s q = unwords <$> wordsAfter s q
+phraseAfter :: Alternative f => String -> Parser Query f String
+phraseAfter s = unwords <$> wordsAfter s
 
 
 -- | Obtain the words in the query between the given strings.
-wordsBetween :: Alternative f => String -> String -> Query -> f [String]
-wordsBetween x y = listToAlt . between x y
+wordsBetween :: Alternative f => String -> String -> Parser Query f [String]
+wordsBetween x y = Parser $ \q -> listToAlt (between x y q)
 
 -- | Obtain the phrase in the query between the given strings.
-phraseBetween :: Alternative f => String -> String -> Query -> f String
-phraseBetween x y q = unwords <$> wordsBetween x y q
+phraseBetween :: Alternative f => String -> String -> Parser Query f String
+phraseBetween x y = unwords <$> wordsBetween x y
+
+newtype Parser s m a = Parser {applyParser :: s -> m a} deriving (Functor)
+
+instance Applicative m => Applicative (Parser s m) where
+  Parser f <*> Parser x = Parser ((<*>) <$> f <*> x)
+  pure f = Parser (pure . const f)
+
+
+instance Alternative m => Alternative (Parser s m) where
+  Parser f <|> Parser g = Parser (\x -> f x <|> g x)
+
+
+on x f = obtain x >>= applyParser f
+
+--on x (Parser f) = x >>= f
