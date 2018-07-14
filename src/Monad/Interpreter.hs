@@ -19,47 +19,23 @@ module Monad.Interpreter
   , liftY
   , countFailures
   , setStateZero
+
+  , withNewState
+  , withNewState'
   ) where
 
-import Internal
 import Control.Monad.Trans
 import Control.Monad.Reader
 import Control.Monad.Trans.Maybe
 import Control.Applicative
-import System.Random
 import Control.Monad.State.Strict
-
-
-data Env c = Env {
-    dataFiles :: FilePath
-  , theprompt :: IO Query
-  , environment :: c -- ^ Any additional environment that the user may wish to use
-  }
-
-
-data Message = NoMessage | EscapeMode | Interrupted
+import System.Console.ANSI
+import InterState
+import Env
 
 
 
 -- NOTE: If the interpreter itself carries information about the new interpreter, the interpreter will stop being a monad!
--- | 
-data InterState b = InterState {
-    interState :: Int
-  , variety :: StdGen -- ^ This seed may be used to generate random responses
-  , thequery :: Query -- ^ The current query to be processed
-  , localquery :: Query -- ^ A place to stash any sub-queries that will not corrupt the original query while various options are being tried out
-  , lastquery :: Query
-  , memory :: b -- ^ Any additional state that the user may wish to use
-  , internalMessage :: Message
-  }
-
-
-initialState :: InterState b
-initialState = InterState 0 (mkStdGen 0) (query "") (query "") (query "") undefined NoMessage
-
-
-
-
 -- The Interpreter and Interpreter' monads
 
 -- Need to convert Interpreter into a mode because if the interpreter itself carries information about the new interpreter, it will stop being a monad!
@@ -112,3 +88,11 @@ interpreterToInterpreter' = toInterpreter' . runMaybeT . unInterpreter
 liftY :: MaybeT (StateT (InterState b) (ReaderT (Env c) IO)) a -> Interpreter c b a
 liftY = toInterpreter
 
+
+withNewState :: b -> Interpreter c b a -> Interpreter c () a
+withNewState x i = toInterpreter $ MaybeT $ StateT (\y -> do (a, s) <- f (y {memory = x}); return (a, s {memory = ()}))
+  where f = runStateT $ runMaybeT $ unInterpreter i
+
+withNewState' :: b -> Interpreter c () a -> Interpreter c b a
+withNewState' x i = toInterpreter $ MaybeT $ StateT (\y -> do (a, s) <- f (y {memory = ()}); return (a, s {memory = x}))
+  where f = runStateT $ runMaybeT $ unInterpreter i

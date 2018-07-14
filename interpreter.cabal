@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 27fe33667f86c8c6d69d1a09e3730551e1dd2e64a84d9a1f41e3e32dc2a3a500
+-- hash: 6b3e37fccafc98d5aed225209b4d6bc14999b1d0fc7a1eee775498d9bcaf784b
 
 name:           interpreter
 version:        0.1.0.0
@@ -31,13 +31,22 @@ library
     , transformers
     , yaml
   exposed-modules:
+      Data.Env
+      Data.InterState
+      Data.Mode
+      Data.Query
+      Env
       Interpreter
+      InterState
       Mode
       Monad.Interpreter
+      Monad.Response
+      MonadIOExtras
       Query
       SearchMode
+      StandardPrompt
   other-modules:
-      Internal
+      Paths_interpreter
   default-language: Haskell2010
 
 test-suite interpreter-test
@@ -65,7 +74,6 @@ test-suite interpreter-test
     , transformers
     , yaml
   other-modules:
-      ConversationSpec
       InterpreterSpec
       ModeSpec
       QuerySpec

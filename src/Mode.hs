@@ -1,88 +1,42 @@
-{-# LANGUAGE Safe, DeriveFunctor, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE Safe #-}
 module Mode
   (
-    Mode'
-  , toMode
-  , runMode
+    module Data.Mode
   , applyMonad
   , changeFutureMode
-  , getModeValue
-  , getNextMode
-  , assignMode
   , assignMaster
-  , toModeWith
   , keepSameMode
   , futureMaster
   , useNewMode
   , modeToState
+  , foreverMode
+  , runFullMode
+  , mapMode
   ) where
 
 import Control.Applicative
 import Control.Monad.Trans.State
+import Data.Mode
 
 
-
--- Modes
-
--- | A mode extracts, from an action, a value and a new mode to be used as the next action.
-newtype Mode' m a = Mode {
-  runMode :: m (a, Mode' m a) -- ^ The inverse of 'toMode'; converts a mode to the value and future mode pair.
-  } deriving (Functor)
-
-getModeValue :: Functor m => Mode' m a -> m a
-getModeValue = fmap fst . runMode
-
-getNextMode :: Monad m => Mode' m a -> m (Mode' m a)
-getNextMode =  fmap snd . runMode
-
--- | Convert an @m (a, Mode' m a)@ to @Mode'@. The first argument is interpeted as the value of the mode and the second argument as the future Mode.
-toMode :: m (a, Mode' m a) -> Mode' m a
-toMode = Mode
 
 modeToState :: StateT (Mode' m a) m a
 modeToState = StateT runMode
 
-instance Monad m => Applicative (Mode' m) where
-  Mode f <*> Mode x = Mode $
-    do (f', i') <- f
-       (x', i'') <- x
-       return (f' x', i' <*> i'')
-
-  pure x = Mode $ pure (x, pure x)
-
-instance (Alternative m, Monad m) => Alternative (Mode' m) where
-  Mode f <|> Mode x = Mode ( f <|> x)
-
-  empty = Mode empty
-
 
 applyMonad :: Monad m => (t -> m a) -> Mode' m t -> Mode' m a
-applyMonad f (Mode k) = Mode $
-  do
-    (x, i') <- k
-    x' <- f x
-    return (x', applyMonad f i')
+applyMonad f k = toMode $
+  runMode k >>= \(y, j) -> (,) <$> f y <*> pure (applyMonad f j)
 
 
 -- | Alter the future mode.
 changeFutureMode :: Monad m => Mode' m a -> Mode' m a -> Mode' m a
-changeFutureMode k (Mode i) = Mode $ do
-  (x, _) <- i
-  pure (x, k)
+changeFutureMode k = toMode . assignMode k . getModeValue
 
-
-
--- | Assign a future Mode from within the monad so that now it can be converted to a mode using 'toMode'
-assignMode :: Functor f => Mode' f a -> f a -> f (a, Mode' f a)
-assignMode m x =  flip (,) m  <$> x
 
 -- | Assign the empty mode so that the function running the mode can decide what to use.
 assignMaster :: (Functor f, Alternative f, Monad f) => f a -> f (a, Mode' f a)
 assignMaster = assignMode empty
-
--- | Assign a future Mode from outside the monad. Less flexible than 'assignMode' which allows you to make decisions on what future mode to assign.
-toModeWith :: Functor m => Mode' m a -> m a -> Mode' m a
-toModeWith m = toMode . assignMode m
 
 -- | Convert the monad to a mode by assigning itself as the new mode.
 keepSameMode :: Functor m => m a -> Mode' m a
@@ -94,3 +48,29 @@ futureMaster = toMode . assignMaster
 
 useNewMode :: Functor f => Mode' f a -> f (a, Mode' f a)
 useNewMode m = assignMode m $ getModeValue m
+
+foreverMode :: Monad m => m b -> Mode' m a -> m a
+foreverMode mb x = (mb >> runMode x) >>= foreverMode mb . snd
+
+-- | Run the mode but with some monad to be run before each step and using a "master" mode to fall back upon in case the alternative is empty and finally a default action in case even the master mode is empty
+runFullMode :: (Monad m, Alternative m) => m b -> Mode' m a -> m a -> Mode' m a -> m a
+runFullMode ma m x i = ma >> ((getNextMode i >>= f) <|> (getNextMode m >>= f) <|> (x >> f m))
+  where f = runFullMode ma m x
+
+
+mapMode :: (m (a, Mode' m a) -> m (b, Mode' m b)) -> Mode' m a -> Mode' m b
+mapMode f = toMode . f . runMode
+
+
+
+
+    --(x, i') <- k
+    --(,) <$> f x <*> pure (applyMonad f i')
+    --(,) <$> f x <*> pure (applyMonad f i')
+    --x' <- f x
+    --return (x', applyMonad f i')
+{-
+changeFutureMode k (Mode i) = Mode $ do
+  (x, _) <- i
+  pure (x, k)
+-}

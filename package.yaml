@@ -23,7 +23,6 @@ dependencies:
 
 library:
   source-dirs: src/
-  other-modules: Internal
 
 tests:
   interpreter-test:
