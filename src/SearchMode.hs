@@ -18,7 +18,7 @@ data SearchSettings f a = SearchSettings {
   }
 
 
-searchWith :: (MonadIO m, Alternative m, MonadState (InterState b) m, MonadReader (Env c) m) => SearchSettings m () -> m ((), Mode' m ())
+searchWith :: (MonadReader (Env c) f, MonadIO f, Alternative f) => SearchSettings (Response Query f) () -> Response Query f ((), Mode' (Response Query f) ())
 searchWith t = runMode (toMode $ searchList t)
   where m = applyToSearched t
         xs = searchUsingList t
@@ -38,15 +38,15 @@ enumeratePrint s = (mapM_ sayIO . zipWith (\a b -> a ++ ": " ++ b) (map (show) [
 
 
 -- Alternative using closures
-searchList :: (MonadState (InterState b) f, Alternative f, MonadIO f, MonadReader (Env c) f) => SearchSettings f () -> f ((), Mode' f ())
-searchList t = (restrict <$> fmap f (obtain (queryWordList . thequery)) <*> obtain (queryOriginal . thequery) <*> pure xs)
+searchList :: (MonadReader (Env c) f, MonadIO f, Alternative f) => SearchSettings (Response Query f) () -> Response Query f ((), Mode' (Response Query f) ())
+searchList t = (restrict <$> fmap f fullQueryWords <*> fullQuery <*> pure xs)
   >>= \z -> searchWithRestricted t {searchUsingList = z}
   where m = applyToSearched t
         m' = modeAfterSuccess t
         f = alterSearchWords t
         xs = searchUsingList t
 
-searchWithRestricted :: (MonadState (InterState b) f, Alternative f, MonadIO f, MonadReader (Env c) f) => SearchSettings f () -> f ((), Mode' f ())
+searchWithRestricted :: (MonadReader (Env c) f, Alternative f, MonadIO f) => SearchSettings (Response Query f) () -> Response Query f ((), Mode' (Response Query f) ())
 searchWithRestricted t  = 
   case z of
      [x] -> assignMode m' $ void $ m x
