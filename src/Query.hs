@@ -2,17 +2,19 @@
 module Query
   (
     module Data.Query
+  , module Monad.Response
   , wordsAfter
   , phraseAfter
   , between
   , wordsBetween
   , phraseBetween
 
-  , applyResponse
   , fullQuery
   , fullQueryWords
-  , toResponse
   , readFull
+  , onlyIfSub
+  , onlyIfSubs
+  , onlyIfSubset
 
   ) where
 
@@ -87,3 +89,20 @@ listToAlt xs = pure xs
 maybeToAlt :: Alternative f => Maybe a -> f a
 maybeToAlt Nothing = empty
 maybeToAlt (Just x) = pure x
+
+
+
+-- | If the words are present in the current query, run the monad otherwise return empty
+--ifSub' :: (MonadState (InterState b) m, Alternative m, MonadPlus m) => [String] -> m b1 -> m b1
+onlyIfSub :: (MonadPlus (Response Query f), Alternative f, Monad f) => [String] -> Response Query f b -> Response Query f b
+onlyIfSub s i = mfilter (S.fromList s `S.isSubsetOf` ) fullQueryWordSet *> i
+
+-- | If the words in either sublist are present in the current query, run the monad otherwise return empty
+onlyIfSubs :: (MonadPlus (Response Query f), Alternative f, Monad f) => [[String]] -> Response Query f b -> Response Query f b
+onlyIfSubs ss i = msum $ map (flip onlyIfSub i) ss
+
+
+-- | If the words are present in the current query, return the pure value otherwise return empty
+onlyIfSubset :: (MonadPlus (Response Query f), Alternative f, Monad f) => [String] -> b -> Response Query f b
+onlyIfSubset x = onlyIfSub x . pure
+

@@ -12,6 +12,7 @@ module Mode
   , foreverMode
   , runFullMode
   , mapMode
+  , changeMonadWith
   ) where
 
 import Control.Applicative
@@ -62,6 +63,11 @@ mapMode :: (m (a, Mode' m a) -> m (b, Mode' m b)) -> Mode' m a -> Mode' m b
 mapMode f = toMode . f . runMode
 
 
+changeMonadWith  :: Monad m1 => (m2 (a1, Mode' m2 a1) -> m1 (a2, Mode' m2 a1)) -> Mode' m2 a1 -> Mode' m1 a2
+changeMonadWith f m = toMode $ g <$> f (runMode m)
+  where g (x, m') = (x, changeMonadWith f m')
+  
+  
 
 
     --(x, i') <- k
